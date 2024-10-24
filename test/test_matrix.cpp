@@ -1,90 +1,384 @@
-#include <catch2/catch_test_macros.hpp>
 #include <catch2/catch_template_test_macros.hpp>
+#include <catch2/catch_test_macros.hpp>
 #include <catch2/generators/catch_generators.hpp>
 
 #include "matrix.hpp"
 
 using namespace tws;
 
+template <Matrix M>
+void add_one_ref(M& m)
+{
+    for (int j = 0; j < m.num_columns(); ++j) {
+        for (int i = 0; i < m.num_rows(); ++i) {
+            m(i, j) += 1;
+        }
+    }
+}
+
+template <Matrix M>
+void add_one_value(M m)
+{
+    for (int j = 0; j < m.num_columns(); ++j) {
+        for (int i = 0; i < m.num_rows(); ++i) {
+            m(i, j) += 1;
+        }
+    }
+}
+
 TEMPLATE_TEST_CASE("Matrix class works", "[matrix]", double, float, int)
 {
     typedef TestType T;
-    int m = GENERATE(1,2,4,10);
-    int n = GENERATE(1,2,4,10);
-    int ldim = m + GENERATE(0,1);
+    int m = GENERATE(1, 2, 4, 10);
+    int n = GENERATE(1, 2, 4, 10);
 
-    matrix<T> A_large(ldim, n);
-    matrix<T> A = A_large.submatrix(0, m, 0, n);
+    matrix<T> A(m, n);
 
     REQUIRE(A.num_rows() == m);
     REQUIRE(A.num_columns() == n);
 
-    // Initialize the matrix
-    for(int j = 0; j < A.num_columns(); ++j) {
-        for(int i = 0; i < A.num_rows(); ++i) {
-            A(i,j) = i + j;
+    for (int j = 0; j < A.num_columns(); ++j) {
+        for (int i = 0; i < A.num_rows(); ++i) {
+            A(i, j) = i + j;
         }
     }
 
-    SECTION("Test standard assignment"){
-        for(int j = 0; j < A.num_columns(); ++j) {
-            for(int i = 0; i < A.num_rows(); ++i) {
-                REQUIRE(A(i,j) == i + j);
+    SECTION("Test standard assignment")
+    {
+        for (int j = 0; j < A.num_columns(); ++j) {
+            for (int i = 0; i < A.num_rows(); ++i) {
+                REQUIRE(A(i, j) == i + j);
             }
         }
     }
 
-    SECTION("Test copy constructor"){
-        matrix<T> A2(A);
-        for(int j = 0; j < A.num_columns(); ++j) {
-            for(int i = 0; i < A.num_rows(); ++i) {
-                REQUIRE(A2(i,j) == i + j);
+    SECTION("Test copy constructor")
+    {
+        matrix<T> B(A);
+        for (int j = 0; j < B.num_columns(); ++j) {
+            for (int i = 0; i < B.num_rows(); ++i) {
+                REQUIRE(B(i, j) == i + j);
+            }
+        }
+        // Make sure the data is not shared
+        REQUIRE(B.data() != A.data());
+    }
+
+    SECTION("Test move constructor")
+    {
+        T* data = A.data();
+        matrix<T> B(std::move(A));
+        for (int j = 0; j < B.num_columns(); ++j) {
+            for (int i = 0; i < B.num_rows(); ++i) {
+                REQUIRE(B(i, j) == i + j);
+            }
+        }
+        // Make sure the data is shared
+        REQUIRE(B.data() == data);
+    }
+
+    SECTION("Test copy assignment")
+    {
+        matrix<T> B(m, n);
+        B = A;
+        for (int j = 0; j < B.num_columns(); ++j) {
+            for (int i = 0; i < B.num_rows(); ++i) {
+                REQUIRE(B(i, j) == i + j);
+            }
+        }
+        // Make sure the data is not shared
+        REQUIRE(B.data() != A.data());
+    }
+
+    SECTION("Test move assignment")
+    {
+        matrix<T> B(m, n);
+        T* data = A.data();
+        B = std::move(A);
+        for (int j = 0; j < B.num_columns(); ++j) {
+            for (int i = 0; i < B.num_rows(); ++i) {
+                REQUIRE(B(i, j) == i + j);
+            }
+        }
+        // Make sure the data is shared
+        REQUIRE(B.data() == data);
+    }
+
+    SECTION("Test row")
+    {
+        for (int i = 0; i < A.num_rows(); ++i) {
+            vectorview<T> row = A.row(i);
+            for (int j = 0; j < A.num_columns(); ++j) {
+                REQUIRE(row[j] == i + j);
+            }
+            // Modify row and make sure A is modified as well
+            for (int j = 0; j < A.num_columns(); ++j) {
+                row[j] = 10 * j;
+            }
+            for (int j = 0; j < A.num_columns(); ++j) {
+                REQUIRE(A(i, j) == 10 * j);
             }
         }
     }
 
-    SECTION("Test move constructor"){
-        matrix<T> A2(std::move(A));
-        for(int j = 0; j < A2.num_columns(); ++j) {
-            for(int i = 0; i < A2.num_rows(); ++i) {
-                REQUIRE(A2(i,j) == i + j);
+    SECTION("Test column")
+    {
+        for (int j = 0; j < A.num_columns(); ++j) {
+            vectorview<T> column = A.column(j);
+            for (int i = 0; i < A.num_rows(); ++i) {
+                REQUIRE(column[i] == i + j);
+            }
+            // Modify column and make sure A is modified as well
+            for (int i = 0; i < A.num_rows(); ++i) {
+                column[i] = 10 * i;
+            }
+            for (int i = 0; i < A.num_rows(); ++i) {
+                REQUIRE(A(i, j) == 10 * i);
             }
         }
     }
 
-    SECTION("Test copy assignment"){
-        matrix<T> A2(m, n);
-        A2 = A;
-        for(int j = 0; j < A2.num_columns(); ++j) {
-            for(int i = 0; i < A2.num_rows(); ++i) {
-                REQUIRE(A2(i,j) == i + j);
+    SECTION("Test submatrix")
+    {
+        if (m > 2 and n > 2) {
+            matrixview<T> B = A.submatrix(1, m - 1, 1, n - 1);
+            for (int j = 0; j < B.num_columns(); ++j) {
+                for (int i = 0; i < B.num_rows(); ++i) {
+                    REQUIRE(B(i, j) == i + j + 2);
+                }
             }
-        }
-    }
-
-    SECTION("Test move assignment"){
-        matrix<T> A2(m, n);
-        A2 = std::move(A);
-        for(int j = 0; j < A2.num_columns(); ++j) {
-            for(int i = 0; i < A2.num_rows(); ++i) {
-                REQUIRE(A2(i,j) == i + j);
+            // Modify B and make sure A is modified as well
+            for (int j = 0; j < B.num_columns(); ++j) {
+                for (int i = 0; i < B.num_rows(); ++i) {
+                    B(i, j) = 2 * i + j * 3;
+                }
             }
-        }
-    }
-
-    SECTION("Test submatrix"){
-        if(m > 2 and n > 2){
-            matrix<T> A2 = A.submatrix(1, m-1, 1, n-1);
-            REQUIRE(A2.num_rows() == m-2);
-            REQUIRE(A2.num_columns() == n-2);
-            for(int j = 0; j < A2.num_columns(); ++j) {
-                for(int i = 0; i < A2.num_rows(); ++i) {
-                    REQUIRE(A2(i,j) == i + j + 2);
+            for (int j = 0; j < B.num_columns(); ++j) {
+                for (int i = 0; i < B.num_rows(); ++i) {
+                    REQUIRE(A(i + 1, j + 1) == 2 * i + j * 3);
                 }
             }
         }
     }
 
+    SECTION("Test add_one_ref")
+    {
+        add_one_ref(A);
+        for (int j = 0; j < A.num_columns(); ++j) {
+            for (int i = 0; i < A.num_rows(); ++i) {
+                REQUIRE(A(i, j) == i + j + 1);
+            }
+        }
+    }
 
+    SECTION("Test add_one_value")
+    {
+        add_one_value(A);
+        for (int j = 0; j < A.num_columns(); ++j) {
+            for (int i = 0; i < A.num_rows(); ++i) {
+                REQUIRE(A(i, j) == i + j);
+            }
+        }
+    }
+}
 
+TEMPLATE_TEST_CASE("Matrixview class works", "[matrix]", double, float, int)
+{
+    typedef TestType T;
+    int m = GENERATE(1, 2, 4, 10);
+    int n = GENERATE(1, 2, 4, 10);
+    int ldim = m + GENERATE(0, 1);
+    int offset = GENERATE(0, 3);
+
+    std::shared_ptr<T[]> data(new T[offset + ldim * n]);
+
+    matrixview<T> A(m, n, data, ldim, offset);
+
+    REQUIRE(A.num_rows() == m);
+    REQUIRE(A.num_columns() == n);
+    REQUIRE(A.ldim() == ldim);
+    REQUIRE(A.offset() == offset);
+
+    for (int j = 0; j < A.num_columns(); ++j) {
+        for (int i = 0; i < A.num_rows(); ++i) {
+            A(i, j) = i + j;
+        }
+    }
+
+    SECTION("Test standard assignment")
+    {
+        for (int j = 0; j < A.num_columns(); ++j) {
+            for (int i = 0; i < A.num_rows(); ++i) {
+                REQUIRE(A(i, j) == i + j);
+            }
+        }
+    }
+
+    SECTION("Test copy constructor")
+    {
+        matrixview<T> B(A);
+        for (int j = 0; j < B.num_columns(); ++j) {
+            for (int i = 0; i < B.num_rows(); ++i) {
+                REQUIRE(B(i, j) == i + j);
+            }
+        }
+        // Make sure the data is shared
+        REQUIRE(B.data() == A.data());
+    }
+
+    SECTION("Test move constructor")
+    {
+        matrixview<T> B(std::move(A));
+        for (int j = 0; j < B.num_columns(); ++j) {
+            for (int i = 0; i < B.num_rows(); ++i) {
+                REQUIRE(B(i, j) == i + j);
+            }
+        }
+    }
+
+    SECTION("Test copy assignment")
+    {
+        matrixview<T> B(m, n, data, ldim, offset);
+        B = A;
+        for (int j = 0; j < B.num_columns(); ++j) {
+            for (int i = 0; i < B.num_rows(); ++i) {
+                REQUIRE(B(i, j) == i + j);
+            }
+        }
+        // Make sure the data is shared
+        REQUIRE(B.data() == A.data());
+    }
+
+    SECTION("Test move assignment")
+    {
+        matrixview<T> B(m, n, data, ldim, offset);
+        B = std::move(A);
+        for (int j = 0; j < B.num_columns(); ++j) {
+            for (int i = 0; i < B.num_rows(); ++i) {
+                REQUIRE(B(i, j) == i + j);
+            }
+        }
+    }
+
+    SECTION("Test row")
+    {
+        for (int i = 0; i < A.num_rows(); ++i) {
+            vectorview<T> row = A.row(i);
+            for (int j = 0; j < A.num_columns(); ++j) {
+                REQUIRE(row[j] == i + j);
+            }
+            // Modify row and make sure A is modified as well
+            for (int j = 0; j < A.num_columns(); ++j) {
+                row[j] = 10 * j;
+            }
+            for (int j = 0; j < A.num_columns(); ++j) {
+                REQUIRE(A(i, j) == 10 * j);
+            }
+        }
+    }
+
+    SECTION("Test column")
+    {
+        for (int j = 0; j < A.num_columns(); ++j) {
+            vectorview<T> column = A.column(j);
+            for (int i = 0; i < A.num_rows(); ++i) {
+                REQUIRE(column[i] == i + j);
+            }
+            // Modify column and make sure A is modified as well
+            for (int i = 0; i < A.num_rows(); ++i) {
+                column[i] = 10 * i;
+            }
+            for (int i = 0; i < A.num_rows(); ++i) {
+                REQUIRE(A(i, j) == 10 * i);
+            }
+        }
+    }
+
+    SECTION("Test submatrix")
+    {
+        if (m > 2 and n > 2) {
+            matrixview<T> B = A.submatrix(1, m - 1, 1, n - 1);
+            for (int j = 0; j < B.num_columns(); ++j) {
+                for (int i = 0; i < B.num_rows(); ++i) {
+                    REQUIRE(B(i, j) == i + j + 2);
+                }
+            }
+            // Modify B and make sure A is modified as well
+            for (int j = 0; j < B.num_columns(); ++j) {
+                for (int i = 0; i < B.num_rows(); ++i) {
+                    B(i, j) = 2 * i + j * 3;
+                }
+            }
+            for (int j = 0; j < B.num_columns(); ++j) {
+                for (int i = 0; i < B.num_rows(); ++i) {
+                    REQUIRE(A(i + 1, j + 1) == 2 * i + j * 3);
+                }
+            }
+        }
+    }
+
+    SECTION("Test add_one_ref")
+    {
+        add_one_ref(A);
+        for (int j = 0; j < A.num_columns(); ++j) {
+            for (int i = 0; i < A.num_rows(); ++i) {
+                REQUIRE(A(i, j) == i + j + 1);
+            }
+        }
+    }
+
+    SECTION("Test add_one_value")
+    {
+        add_one_value(A);
+        for (int j = 0; j < A.num_columns(); ++j) {
+            for (int i = 0; i < A.num_rows(); ++i) {
+                // This may seem counterintuitive, but if the matrixview is
+                // passed by value, we expect the original data to be modified.
+                REQUIRE(A(i, j) == i + j + 1);
+            }
+        }
+    }
+}
+
+TEMPLATE_TEST_CASE(
+    "Matrixview - matrix interaction works", "[matrix]", double, float, int)
+{
+    typedef TestType T;
+    int m = GENERATE(1, 2, 4, 10);
+    int n = GENERATE(1, 2, 4, 10);
+    int ldim = m + GENERATE(0, 1);
+    int offset = GENERATE(0, 3);
+
+    matrix<T> A(m, n);
+
+    for (int j = 0; j < A.num_columns(); ++j) {
+        for (int i = 0; i < A.num_rows(); ++i) {
+            A(i, j) = i + j;
+        }
+    }
+
+    std::shared_ptr<T[]> data(new T[offset + ldim * n]);
+    matrixview<T> B(m, n, data, ldim, offset);
+
+    for (int j = 0; j < B.num_columns(); ++j) {
+        for (int i = 0; i < B.num_rows(); ++i) {
+            B(i, j) = 10 * i + 3 * j;
+        }
+    }
+
+    SECTION("Test matrixview -> matrix")
+    {
+        A = B;
+        for (int j = 0; j < A.num_columns(); ++j) {
+            for (int i = 0; i < A.num_rows(); ++i) {
+                REQUIRE(A(i, j) == 10 * i + 3 * j);
+            }
+        }
+        matrix<T> C(B);
+        for (int j = 0; j < C.num_columns(); ++j) {
+            for (int i = 0; i < C.num_rows(); ++i) {
+                REQUIRE(C(i, j) == 10 * i + 3 * j);
+            }
+        }
+    }
 }
