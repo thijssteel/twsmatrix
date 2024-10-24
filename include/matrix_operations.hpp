@@ -9,10 +9,11 @@
 namespace tws {
 
 // Matrix-vector multiplication, store the result in a new vector
-template <typename T>
-vector<T> operator*(const matrix<T>& A, const vector<T>& v) {
+template <Matrix M, Vector V>
+auto operator*(const M& A, const V& v)
+{
     assert(A.num_columns() == v.size());
-    vector<T> result(A.num_rows());
+    vector<std::remove_const_t<typename M::val_t>> result(A.num_rows());
     for (int i = 0; i < A.num_rows(); ++i) {
         result[i] = 0;
         for (int j = 0; j < A.num_columns(); ++j) {
@@ -23,8 +24,9 @@ vector<T> operator*(const matrix<T>& A, const vector<T>& v) {
 }
 
 // Matrix-vector multiplication, store the result in a given vector
-template <typename T>
-void multiply(const matrix<T>& A, const vector<T>& v, vector<T>& result) {
+template <Matrix M, Vector V1, Vector V2>
+void multiply(const M& A, const V1& v, V2& result)
+{
     assert(A.num_columns() == v.size());
     assert(A.num_rows() == result.size());
     for (int i = 0; i < A.num_rows(); ++i) {
@@ -36,10 +38,12 @@ void multiply(const matrix<T>& A, const vector<T>& v, vector<T>& result) {
 }
 
 // Matrix-matrix multiplication, store the result in a new matrix
-template <typename T>
-matrix<T> operator*(const matrix<T>& A, const matrix<T>& B) {
+template <Matrix M1, Matrix M2>
+auto operator*(const M1& A, const M2& B)
+{
     assert(A.num_columns() == B.num_rows());
-    matrix<T> result(A.num_rows(), B.num_columns());
+    matrix<std::remove_const_t<typename M1::val_t>> result(A.num_rows(),
+                                                           B.num_columns());
     for (int i = 0; i < A.num_rows(); ++i) {
         for (int j = 0; j < B.num_columns(); ++j) {
             result(i, j) = 0;
@@ -52,8 +56,9 @@ matrix<T> operator*(const matrix<T>& A, const matrix<T>& B) {
 }
 
 // Matrix-matrix multiplication, store the result in a given matrix
-template <typename T>
-void multiply(const matrix<T>& A, const matrix<T>& B, matrix<T>& result) {
+template <Matrix M1, Matrix M2, Matrix M3>
+void multiply(const M1& A, const M2& B, M3& result)
+{
     assert(A.num_columns() == B.num_rows());
     assert(A.num_rows() == result.num_rows());
     assert(B.num_columns() == result.num_columns());
@@ -68,9 +73,11 @@ void multiply(const matrix<T>& A, const matrix<T>& B, matrix<T>& result) {
 }
 
 // Transpose of a matrix, store the result in a new matrix
-template <typename T>
-matrix<T> transpose(const matrix<T>& A) {
-    matrix<T> result(A.num_columns(), A.num_rows());
+template <Matrix M>
+auto transpose(const M& A)
+{
+    matrix<std::remove_const_t<typename M::val_t>> result(A.num_columns(),
+                                                          A.num_rows());
     for (int i = 0; i < A.num_rows(); ++i) {
         for (int j = 0; j < A.num_columns(); ++j) {
             result(j, i) = A(i, j);
@@ -80,8 +87,9 @@ matrix<T> transpose(const matrix<T>& A) {
 }
 
 // Transpose of a matrix, store the result in a given matrix
-template <typename T>
-void transpose(const matrix<T>& A, matrix<T>& result) {
+template <Matrix M1, Matrix M2>
+void transpose(const M1& A, M2& result)
+{
     assert(A.num_rows() == result.num_columns());
     assert(A.num_columns() == result.num_rows());
     for (int i = 0; i < A.num_rows(); ++i) {
@@ -92,9 +100,10 @@ void transpose(const matrix<T>& A, matrix<T>& result) {
 }
 
 // Frobenius norm of a matrix
-template <typename T>
-T norm(const matrix<T>& A) {
-    T result = 0;
+template <Matrix M>
+auto norm(const M& A)
+{
+    std::remove_const_t<typename M::val_t> result = 0;
     for (int i = 0; i < A.num_rows(); ++i) {
         for (int j = 0; j < A.num_columns(); ++j) {
             result += A(i, j) * A(i, j);
@@ -103,7 +112,6 @@ T norm(const matrix<T>& A) {
     return std::sqrt(result);
 }
 
-
-} // namespace tws
+}  // namespace tws
 
 #endif
