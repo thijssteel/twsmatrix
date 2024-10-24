@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<AutoVisualizer xmlns="http://schemas.microsoft.com/vstudio/debugger/natvis/2010">
+
+<Type Name="tws::vector&lt;*&gt;">      
+    <DisplayString>vector ({n_})</DisplayString>
+    <Expand>
+    <ArrayItems>
+        <Size>n_</Size>
+        <ValuePointer>data_</ValuePointer>
+    </ArrayItems>
+    </Expand>
+</Type>
+
+<Type Name="tws::matrix&lt;*&gt;">      
+    <DisplayString>matrix ({m_} x {n_})</DisplayString>
+    <Expand>
+        <Item Name="m">m_</Item>
+        <Item Name="n">n_</Item>
+        <Item Name="ldim">ldim_</Item>
+        <IndexListItems>
+            <Size>n_ * m_</Size>
+            <ValueNode>data_[ $i/m_*ldim_ + $i%m_ ]</ValueNode>
+        </IndexListItems>
+    </Expand>
+</Type>
+
+
+
+</AutoVisualizer>
