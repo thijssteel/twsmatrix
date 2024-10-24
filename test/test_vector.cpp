@@ -259,3 +259,19 @@ TEMPLATE_TEST_CASE("Vectorview - vector interaction works", "[vector]", double, 
 
     }
 }
+
+TEMPLATE_TEST_CASE("Vector utils work", "[vector]", double, float, int)
+{
+    typedef TestType T;
+    int n = 3;
+
+    vector<T> v(n);
+    std::shared_ptr<T[]> data(new T[n]);
+    vectorview<T> vv(n, data, 1);
+
+    randomize(v);
+    randomize(vv);
+
+    print_vector(v);
+    print_vector(vv);
+}

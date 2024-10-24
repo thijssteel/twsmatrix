@@ -440,8 +440,8 @@ class vectorview {
 };
 
 // Initialize a vector with random values
-template <Scalar T>
-void randomize(vector<T>& v)
+template <Vector V>
+void randomize(V& v)
 {
     #ifdef NDEBUG
     std::random_device rd;
@@ -450,16 +450,25 @@ void randomize(vector<T>& v)
     // Note, when debugging, we want to have the same random numbers every time
     std::mt19937 gen(1302);
     #endif
-    std::normal_distribution<T> d(0, 1);
 
-    for (int i = 0; i < v.size(); ++i) {
-        v[i] = d(gen);
+    typedef typename V::val_t T;
+
+    if constexpr(std::is_integral<T>::value) {
+        std::uniform_int_distribution<T> d(0, 100);
+        for (int i = 0; i < v.size(); ++i) {
+            v[i] = d(gen);
+        }
+    } else {
+        std::normal_distribution<T> d(0, 1);
+        for (int i = 0; i < v.size(); ++i) {
+            v[i] = d(gen);
+        }
     }
 }
 
 // Code for printing
-template <Scalar T>
-void print_vector(const vector<T>& v)
+template <Vector V>
+void print_vector(const V& v)
 {
     std::cout << "(" << v.size() << ")[" << std::endl;
     for (int i = 0; i < v.size(); ++i) {

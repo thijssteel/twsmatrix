@@ -382,3 +382,22 @@ TEMPLATE_TEST_CASE(
         }
     }
 }
+
+
+
+TEMPLATE_TEST_CASE("Matrix utils work", "[matrix]", double, float, int)
+{
+    typedef TestType T;
+    int m = 4;
+    int n = 3;
+
+    matrix<T> A(m, n);
+    randomize(A);
+    print_matrix(A);
+
+    std::shared_ptr<T[]> data(new T[m * n]);
+    matrixview<T> B(m, n, data, m, 0);
+
+    randomize(B);
+    print_matrix(B);
+}

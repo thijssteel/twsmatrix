@@ -559,8 +559,8 @@ class matrixview {
 };
 
 // Code for printing
-template <Scalar T>
-void print_matrix(const matrix<T>& m)
+template <Matrix M>
+void print_matrix(const M& m)
 {
     std::cout << "(" << m.num_rows() << "," << m.num_columns() << ")["
               << std::endl;
@@ -575,12 +575,33 @@ void print_matrix(const matrix<T>& m)
 }
 
 // Initialize a matrix with random values
-template <Scalar T>
-void randomize(matrix<T>& m)
+template <Matrix M>
+void randomize(M& m)
 {
-    for (int j = 0; j < m.num_columns(); ++j) {
-        for (int i = 0; i < m.num_rows(); ++i) {
-            m(i, j) = (T)rand() / RAND_MAX;
+#ifdef NDEBUG
+    std::random_device rd;
+    std::mt19937 gen(rd());
+#else
+    // Note, when debugging, we want to have the same random numbers every time
+    std::mt19937 gen(1302);
+#endif
+
+    typedef typename M::val_t T;
+
+    if constexpr (std::is_integral<T>::value) {
+        std::uniform_int_distribution<T> d(0, 100);
+        for (int j = 0; j < m.num_columns(); ++j) {
+            for (int i = 0; i < m.num_rows(); ++i) {
+                m(i, j) = d(gen);
+            }
+        }
+    }
+    else {
+        std::normal_distribution<T> d(0, 1);
+        for (int j = 0; j < m.num_columns(); ++j) {
+            for (int i = 0; i < m.num_rows(); ++i) {
+                m(i, j) = d(gen);
+            }
         }
     }
 }
