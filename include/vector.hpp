@@ -13,7 +13,8 @@ namespace tws {
 
 // This defines a vector as an abstract concept.
 // You can safely ignore this untill you have learned about concepts.
-#if (__cplusplus >= 202002L)
+template<typename T>
+concept Scalar = std::is_arithmetic<T>::value;
 
 template <typename V>
 concept Vector = requires(V v)
@@ -23,14 +24,8 @@ concept Vector = requires(V v)
     {v[0]};
 };
 
-#else
-
-    #define Vector typename
-
-#endif
-
 // Forward declaration of the vectorview class
-template <typename T = double>
+template <Scalar T = double>
 class vectorview;
 
 /**
@@ -41,7 +36,7 @@ class vectorview;
  * @tparam T this is a template parameter that specifies the type of the
  *           elements of the vector.
  */
-template <typename T = double>
+template <Scalar T = double>
 class vector {
 
    public:
@@ -284,7 +279,7 @@ class vector {
  * @tparam T this is a template parameter that specifies the type of the
  *           elements of the vector.
  */
-template <typename T>
+template <Scalar T>
 class vectorview {
 
    public:
@@ -445,7 +440,7 @@ class vectorview {
 };
 
 // Initialize a vector with random values
-template <typename T>
+template <Scalar T>
 void randomize(vector<T>& v)
 {
     #ifdef NDEBUG
@@ -463,7 +458,7 @@ void randomize(vector<T>& v)
 }
 
 // Code for printing
-template <typename T>
+template <Scalar T>
 void print_vector(const vector<T>& v)
 {
     std::cout << "(" << v.size() << ")[" << std::endl;

@@ -74,7 +74,7 @@ void sub(const V1& v1, const V2& v2, V3& result)
 }
 
 // Multiply a vector by a scalar and store the result in a new vector
-template <Vector V1, typename T>
+template <Vector V1, Scalar T>
 vector<T> operator*(const V1& v, T scalar)
 {
     vector<T> result(v.size());
@@ -85,7 +85,7 @@ vector<T> operator*(const V1& v, T scalar)
 }
 
 // Multiply a vector by a scalar and store the result in a new vector
-template <Vector V1, typename T>
+template <Vector V1, Scalar T>
 vector<T> operator*(T scalar, const V1& v)
 {
     vector<T> result(v.size());
@@ -96,7 +96,7 @@ vector<T> operator*(T scalar, const V1& v)
 }
 
 // Multiply a vector by a scalar and store the result in the vector
-template <Vector V1, typename T>
+template <Vector V1, Scalar T>
 void operator*=(V1& v, T scalar)
 {
     for (int i = 0; i < v.size(); ++i) {
@@ -105,7 +105,7 @@ void operator*=(V1& v, T scalar)
 }
 
 // Multiply a vector by a scalar and store the result in a given vector
-template <Vector V1, Vector V2, typename T>
+template <Vector V1, Vector V2, Scalar T>
 void multiply(const V1& v, T scalar, V2& result)
 {
     assert(v.size() == result.size());

@@ -2,7 +2,7 @@
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/generators/catch_generators.hpp>
 
-#include "matrix.hpp"
+#include "twsmatrix.hpp"
 
 using namespace tws;
 

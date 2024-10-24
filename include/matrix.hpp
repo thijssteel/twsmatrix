@@ -16,8 +16,6 @@ namespace tws {
 
 // This defines a matrix as an abstract concept.
 // You can safely ignore this untill you have learned about concepts.
-#if (__cplusplus >= 202002L)
-
 template <typename M>
 concept Matrix = requires(M m)
 {
@@ -28,14 +26,8 @@ concept Matrix = requires(M m)
     {m(0, 0)};
 };
 
-#else
-
-    #define Matrix typename
-
-#endif
-
 // Forward declaration of the matrixview class
-template <typename T = double>
+template <Scalar T = double>
 class matrixview;
 
 /**
@@ -46,7 +38,7 @@ class matrixview;
  * @tparam T this is a template parameter that specifies the type of the
  *           elements of the vector.
  */
-template <typename T = double>
+template <Scalar T = double>
 class matrix {
    public:
     typedef T val_t;
@@ -246,7 +238,7 @@ class matrix {
      * @param j2 index of the last column of the submatrix (not inclusive)
      *
      * @example
-     * Matrix<float> A(5,5);
+     * matrix<float> A(5,5);
      * auto B = A.submatrix(1, 4, 1, 4); // B is a 3x3 submatrix of A
      *
      * Note: this function will also be called if the matrix is const, even
@@ -323,7 +315,7 @@ class matrix {
  * @tparam T this is a template parameter that specifies the type of the
  *           elements of the vector.
  */
-template <typename T>
+template <Scalar T>
 class matrixview {
    public:
     typedef T val_t;
@@ -492,7 +484,7 @@ class matrixview {
      * @param j2 index of the last column of the submatrix (not inclusive)
      *
      * @example
-     * Matrix<float> A(5,5);
+     * matrix<float> A(5,5);
      * auto B = A.submatrix(1, 4, 1, 4); // B is a 3x3 submatrix of A
      *
      * Note: this function will also be called if the matrix is const, even
@@ -567,7 +559,7 @@ class matrixview {
 };
 
 // Code for printing
-template <typename T>
+template <Scalar T>
 void print_matrix(const matrix<T>& m)
 {
     std::cout << "(" << m.num_rows() << "," << m.num_columns() << ")["
@@ -583,7 +575,7 @@ void print_matrix(const matrix<T>& m)
 }
 
 // Initialize a matrix with random values
-template <typename T>
+template <Scalar T>
 void randomize(matrix<T>& m)
 {
     for (int j = 0; j < m.num_columns(); ++j) {
