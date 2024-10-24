@@ -6,13 +6,14 @@
 #include <cassert>
 #include <chrono>
 #include <iostream>
+#include <memory>
 #include <random>
 
 namespace tws {
 
 // This defines a vector as an abstract concept.
 // You can safely ignore this untill you have learned about concepts.
-#if(__cplusplus >= 202002L)
+#if (__cplusplus >= 202002L)
 
 template <typename V>
 concept Vector = requires(V v)
@@ -24,139 +25,131 @@ concept Vector = requires(V v)
 
 #else
 
-#define Vector typename
+    #define Vector typename
 
 #endif
 
+// Forward declaration of the vectorview class
+template <typename T = double>
+class vectorview;
+
 /**
  * A vector class that can be used to store vectors of arbitrary size.
+ *
+ * This class owns the data it points to.
  *
  * @tparam T this is a template parameter that specifies the type of the
  *           elements of the vector.
  */
 template <typename T = double>
 class vector {
-   public:
-    typedef T val_t;
-    typedef int idx_t;
 
    public:
+    typedef T val_t;
+
     /**
      * @brief Construct a new vector
      *
      * @param n  integer
      *           Number of elements of the vector
      */
-    vector(idx_t n)
-        : n_(n), stride_(1), locally_allocated_(true), data_(new T[n_])
+    vector(int n) : _n(n), _data(new T[_n])
     {
 #ifndef NDEBUG
-        std::fill(data_, data_ + n_, NAN);
+        if constexpr (std::is_floating_point<T>::value) {
+            for (int i = 0; i < _n; ++i) {
+                _data[i] = std::nan("1");
+            }
+        }
 #endif
     }
 
     /**
-     * @brief Construct a new vector without allocating memory
+     * @brief Construct a new vector and initialize it with a value
      *
-     * @param n      integer
-     *               Number of elements of the vector
+     * @param n     integer
+     *              Number of elements of the vector
      *
-     * @param data   pointer to the data
-     *               Pointer to the data of the vector.
-     *               Note: this constructor does not check whether the data
-     *               pointed to by ptr is large enough to store the vector.
-     *               Use this constructor with caution.
-     *
-     * @param stride integer
-     *               Stride of the vector (number of position between two
-     * elements)
+     * @param value T
+     *              Value to initialize the vector with
      */
-    vector(idx_t n, T* data, idx_t stride)
-        : n_(n), stride_(stride), locally_allocated_(false), data_(data)
-    {}
+    vector(int n, T value) : _n(n), _data(new T[_n])
+    {
+        for (int i = 0; i < _n; ++i) {
+            _data[i] = value;
+        }
+    }
 
     // Destructor
     ~vector()
     {
-        if (locally_allocated_) {
-            delete[] data_;
-        }
+        // Nothing to do here, the shared pointer will take care of the memory
     }
 
     /**
      * @brief Construct a new vector as a copy of another vector
-     *
-     * Note: this contructor makes a deep copy of the vector and allocates
-     * new memory to facilitate this.
+     *        This does a deep copy.
      *
      * @param v vector
      *          vector to copy
      */
-    vector(const vector& v)
-        : n_(v.size()), stride_(1), locally_allocated_(true), data_(new T[n_])
+    vector(const vector& v) : _n(v.size()), _data(new T[_n])
     {
-        for (int i = 0; i < n_; ++i) {
-            data_[i] = v[i];
+        for (int i = 0; i < _n; ++i) {
+            _data[i] = v[i];
         }
     }
 
     /**
      * @brief Construct a new vector as a copy of another vector
+     *        This does a deep copy.
      *
-     * Note: this contructor makes a deep copy of the vector and allocates
-     * new memory to facilitate this.
+     * This is a templated version, you can safely ignore this untill you
+     * have learned about expression templates and more advanced C++ features.
      *
      * @param v vector
      *          vector to copy
      */
     template <Vector V>
-    vector(const V& v)
-        : n_(v.size()), stride_(1), locally_allocated_(true), data_(new T[n_])
+    vector(const V& v) : _n(v.size()), _data(new T[_n])
     {
-        for (int i = 0; i < n_; ++i) {
-            data_[i] = v[i];
+        for (int i = 0; i < _n; ++i) {
+            _data[i] = v[i];
         }
     }
 
     /**
-     * @brief Construct a new vector object by moving the data of another vector
-     *        Note, we do a deep copy and not a shallow copy
-     *        even though the given vector is temporary.
+     * @brief Construct a new vector object by moving the data of another
+     *        vector.
+     *        This does a shallow copy.
      *
      * @param v vector
      *          vector to move
      */
-    vector(vector&& v)
-        : n_(v.size()),
-          stride_(1),
-          locally_allocated_(true),
-          data_(new T[n_])
-    {
-        for (int i = 0; i < n_; ++i) {
-            data_[i] = v[i];
-        }
-    }
+    vector(vector&& v) : _n(v.size()), _data(v._data) {}
 
     /**
-     * @brief Assign the data of another vector to this vector
+     * @brief Assign the data of another vector to this vector.
+     *        This does a deep copy.
      *
      * @param v vector
      *          vector to copy
      * @return  vector&
      *          Reference to this vector (used for chaining assignments)
      */
-    vector& operator=(const vector<T>& v)
+    vector& operator=(const vector& v)
     {
-        assert(v.size() == n_);
-        for (int i = 0; i < n_; ++i) {
-            data_[i * stride_] = v[i];
+        assert(v.size() == _n);
+        for (int i = 0; i < _n; ++i) {
+            _data[i] = v[i];
         }
         return *this;
     }
 
     /**
      * @brief Assign the data of another vector to this vector
-     *        templated version
+     *        templated version.
+     *        This does a deep copy.
      *
      * @param v vector
      *          vector to copy
@@ -166,17 +159,16 @@ class vector {
     template <Vector V>
     vector& operator=(const V& v)
     {
-        assert(v.size() == n_);
-        for (int i = 0; i < n_; ++i) {
-            data_[i * stride_] = v[i];
+        assert(v.size() == _n);
+        for (int i = 0; i < _n; ++i) {
+            _data[i] = v[i];
         }
         return *this;
     }
 
     /**
      * @brief Assign the data of another vector to this vector
-     *        Note, we do a deep copy and not a shallow copy
-     *        even though the given vector is temporary.
+     *        This does a shallow copy
      *
      * @param v vector
      *          vector to move
@@ -185,18 +177,13 @@ class vector {
      */
     vector& operator=(vector&& v)
     {
-        assert(v.size() == n_);
-        for (int i = 0; i < n_; ++i) {
-            data_[i * stride_] = v[i];
-        }
+        assert(v.size() == _n);
+        _data = v._data;
         return *this;
     }
 
     // Returns the size of the vector
-    inline idx_t size() const { return n_; }
-
-    // Returns the stride of the vector
-    inline idx_t stride() const { return stride_; }
+    inline int size() const { return _n; }
 
     /**
      * @brief Access the i-th element of the vector
@@ -206,10 +193,11 @@ class vector {
      * @return  const T&
      *          Because this vector is const, we return a const reference.
      */
-    inline const T& operator[](const idx_t i) const
+    inline const T& operator[](const int i) const
     {
-        assert(i < n_);
-        return data_[i * stride_];
+        assert(i < _n);
+        assert(i >= 0);
+        return _data[i];
     }
 
     /**
@@ -219,10 +207,11 @@ class vector {
      *          index
      * @return  T&
      */
-    inline T& operator[](const idx_t i)
+    inline T& operator[](const int i)
     {
-        assert(i < n_);
-        return data_[i * stride_];
+        assert(i < _n);
+        assert(i >= 0);
+        return _data[i];
     }
 
     /**
@@ -243,67 +232,233 @@ class vector {
      * though the returned object is not const. Solving this problem would
      * require either an inefficient or a more complex design.
      */
-    inline vector subvector(idx_t start, idx_t end, idx_t stride = 1) const
+    inline vectorview<T> subvector(int start, int end, int stride = 1) const
     {
         assert(start >= 0);
-        assert(end <= n_);
+        assert(end <= _n);
         assert(start < end);
         assert(stride > 0);
-        return vector((end - start) / stride, &data_[start * stride_],
-                      stride * stride_);
+        return vectorview<T>((end - start) / stride, _data, stride, start);
     }
 
     /**
      * Return a pointer to the data of the vector.
      */
-    inline const T* data() const { return data_; }
+    inline const T* data() const { return _data.get(); }
 
     /**
      * Return a pointer to the data of the vector.
      */
-    inline T* data() { return data_; }
+    inline T* data() { return _data.get(); }
 
     /**
      * Return a pointer to the beginning of the vector.
      */
-    inline T* begin(){
-        return data_;
-    }
+    inline T* begin() { return _data.get(); }
 
     /**
      * Return a pointer to the end of the vector.
      */
-    inline T* end(){
-        return data_+n_;
-    }
+    inline T* end() { return _data.get() + _n; }
 
     /**
      * Return a const pointer to the beginning of the vector.
      */
-    inline const T* cbegin() const{
-        return data_;
-    }
+    inline const T* cbegin() const { return _data.get(); }
 
     /**
      * Return a const pointer to the end of the vector.
      */
-    inline const T* cend() const{
-        return data_+n_;
-    }
+    inline const T* cend() const { return _data.get() + _n; }
 
    private:
-    const idx_t n_;
-    const idx_t stride_;
-    const bool locally_allocated_;
-    T* data_;
+    const int _n;
+    std::shared_ptr<T[]> _data;
+};
+
+/**
+ * A vector class that can be used to store vectors of arbitrary size.
+ *
+ * This class does not own the data it points to.
+ *
+ * @tparam T this is a template parameter that specifies the type of the
+ *           elements of the vector.
+ */
+template <typename T>
+class vectorview {
+
+   public:
+    typedef T val_t;
+
+    // Constructor
+    vectorview(int n, std::shared_ptr<T[]> data, int stride = 1, int offset = 0)
+        : _n(n), _stride(stride), _offset(offset), _data(data)
+    {}
+
+    // Destructor
+    ~vectorview()
+    {
+        // Nothing to do here, the shared pointer will take care of the memory
+    }
+
+    /**
+     * @brief Construct a new vectorview as a copy of another vectorview
+     *        This does a shallow copy.
+     *
+     * @param v vector
+     *          vector to copy
+     */
+    vectorview(const vectorview& v)
+        : _n(v._n), _stride(v._stride), _offset(v._offset),_data(v._data)
+    {}
+
+    /**
+     * @brief Construct a new vectorview object by moving the data of another
+     *        vector. This does a shallow copy.
+     *
+     * @param v vector
+     *          vector to move
+     */
+    vectorview(vectorview&& v) : _n(v._n), _stride(v._stride), _offset(v._offset), _data(v._data) {}
+
+    /**
+     * @brief Assign the data of another vector to this vector
+     *        This does a shallow copy.
+     *
+     * @param v vectorview
+     *          vectorview to copy
+     * @return  vectorview&
+     *          Reference to this vector (used for chaining assignments)
+     */
+    vectorview& operator=(const vectorview& v)
+    {
+        assert(v.size() == _n);
+        assert(v.stride() == _stride);
+        assert(v.offset() == _offset);
+        _data = v._data;
+        return *this;
+    }
+
+    /**
+     * @brief Assign the data of another vector to this vector
+     *        This does a shallow copy
+     *
+     * @param v vector
+     *          vector to move
+     * @return  vector&
+     *          Reference to this vector (used for chaining assignments)
+     */
+    vectorview& operator=(vectorview&& v)
+    {
+        assert(v.size() == _n);
+        assert(v.stride() == _stride);
+        assert(v.offset() == _offset);
+        _data = v._data;
+        return *this;
+    }
+
+    // Returns the size of the vector
+    inline int size() const { return _n; }
+
+    // Returns the stride of the vector
+    inline int stride() const { return _stride; }
+
+    // Returns the offset of the vector
+    inline int offset() const { return _offset; }
+
+    /**
+     * @brief Access the i-th element of the vector
+     *
+     * @param i integer
+     *          index
+     * @return  const T&
+     *          Because this vector is const, we return a const reference.
+     */
+    inline const T& operator[](const int i) const
+    {
+        assert(i < _n);
+        assert(i >= 0);
+        return _data[_offset + i * _stride];
+    }
+
+    /**
+     * @brief Access the i-th element of the vector
+     *
+     * @param i integer
+     *          index
+     * @return  T&
+     */
+    inline T& operator[](const int i)
+    {
+        assert(i < _n);
+        assert(i >= 0);
+        return _data[_offset + i * _stride];
+    }
+
+    /**
+     * Return a subvector of the vector.
+     * The subvector starts at index start and ends at index end - 1.
+     * The stride is the step size between two elements of the subvector.
+     *
+     * @param start  first index of the subvector
+     * @param end    last index of the subvector (not inclusive)
+     * @param stride step size between two elements of the subvector
+     *
+     * @example
+     * vector<float> v(10);
+     * auto v2 = v.subvector(1,9,2); // v2 is a length 4 vector containing the
+     * elements v[1], v[3], v[5], v[7]
+     *
+     * Note: this function will also be called if the vector is const, even
+     * though the returned object is not const. Solving this problem would
+     * require either an inefficient or a more complex design.
+     */
+    inline vectorview subvector(int start, int end, int stride = 1) const
+    {
+        assert(start >= 0);
+        assert(end <= _n);
+        assert(start < end);
+        assert(stride > 0);
+        return vectorview((end - start) / stride, _data,
+                          _stride * stride, _offset + start * _stride);
+    }
+
+    /**
+     * Return a pointer to the data of the vector.
+     *
+     * Warning, use with caution, this is not a shared pointer.
+     */
+    inline const T* data() const { return _data.get(); }
+
+    /**
+     * Return a pointer to the data of the vector.
+     *
+     * Warning, use with caution, this is not a shared pointer.
+     */
+    inline T* data() { return _data.get(); }
+
+   private:
+    const int _n;
+    const int _stride;
+    const int _offset;
+    std::shared_ptr<T[]> _data;
 };
 
 // Initialize a vector with random values
 template <typename T>
 void randomize(vector<T>& v)
 {
+    #ifdef NDEBUG
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    #else
+    // Note, when debugging, we want to have the same random numbers every time
+    std::mt19937 gen(1302);
+    #endif
+    std::normal_distribution<T> d(0, 1);
+
     for (int i = 0; i < v.size(); ++i) {
-        v[i] = (T)rand() / RAND_MAX;
+        v[i] = d(gen);
     }
 }
 
