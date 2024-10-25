@@ -293,7 +293,7 @@ class vectorview {
     // Destructor
     ~vectorview()
     {
-        // Nothing to do here, the shared pointer will take care of the memory
+        // Nothing to do here, the view does not own the data
     }
 
     /**

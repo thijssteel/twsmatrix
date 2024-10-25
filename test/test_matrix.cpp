@@ -188,16 +188,14 @@ TEMPLATE_TEST_CASE("Matrixview class works", "[matrix]", double, float, int)
     int m = GENERATE(1, 2, 4, 10);
     int n = GENERATE(1, 2, 4, 10);
     int ldim = m + GENERATE(0, 1);
-    int offset = GENERATE(0, 3);
 
-    std::shared_ptr<T[]> data(new T[offset + ldim * n]);
+    std::unique_ptr<T[]> data(new T[ldim * n]);
 
-    matrixview<T> A(m, n, data, ldim, offset);
+    matrixview<T> A(m, n, data.get(), ldim);
 
     REQUIRE(A.num_rows() == m);
     REQUIRE(A.num_columns() == n);
     REQUIRE(A.ldim() == ldim);
-    REQUIRE(A.offset() == offset);
 
     for (int j = 0; j < A.num_columns(); ++j) {
         for (int i = 0; i < A.num_rows(); ++i) {
@@ -238,7 +236,8 @@ TEMPLATE_TEST_CASE("Matrixview class works", "[matrix]", double, float, int)
 
     SECTION("Test copy assignment")
     {
-        matrixview<T> B(m, n, data, ldim, offset);
+        std::unique_ptr<T[]> data2(new T[ldim * n]);
+        matrixview<T> B(m, n, data2.get(), ldim);
         B = A;
         for (int j = 0; j < B.num_columns(); ++j) {
             for (int i = 0; i < B.num_rows(); ++i) {
@@ -251,7 +250,8 @@ TEMPLATE_TEST_CASE("Matrixview class works", "[matrix]", double, float, int)
 
     SECTION("Test move assignment")
     {
-        matrixview<T> B(m, n, data, ldim, offset);
+        std::unique_ptr<T[]> data2(new T[ldim * n]);
+        matrixview<T> B(m, n, data2.get(), ldim);
         B = std::move(A);
         for (int j = 0; j < B.num_columns(); ++j) {
             for (int i = 0; i < B.num_rows(); ++i) {
@@ -357,8 +357,8 @@ TEMPLATE_TEST_CASE(
         }
     }
 
-    std::shared_ptr<T[]> data(new T[offset + ldim * n]);
-    matrixview<T> B(m, n, data, ldim, offset);
+    std::unique_ptr<T[]> data(new T[offset + ldim * n]);
+    matrixview<T> B(m, n, data.get(), ldim);
 
     for (int j = 0; j < B.num_columns(); ++j) {
         for (int i = 0; i < B.num_rows(); ++i) {
@@ -393,8 +393,8 @@ TEMPLATE_TEST_CASE("Matrix utils work", "[matrix]", double, float, int)
     randomize(A);
     print_matrix(A);
 
-    std::shared_ptr<T[]> data(new T[m * n]);
-    matrixview<T> B(m, n, data, m, 0);
+    std::unique_ptr<T[]> data(new T[m * n]);
+    matrixview<T> B(m, n, data.get(), m);
 
     randomize(B);
     print_matrix(B);

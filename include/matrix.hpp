@@ -123,7 +123,7 @@ class matrix {
      * @param m Matrix
      *          Matrix to move
      */
-    matrix(matrix&& m) : _m(m.num_rows()), _n(m.num_columns()), _data(m._data)
+    matrix(matrix&& m) : _m(m.num_rows()), _n(m.num_columns()), _data(std::move(m._data))
     {}
 
     /**
@@ -185,7 +185,7 @@ class matrix {
     {
         assert(m.num_rows() == _m);
         assert(m.num_columns() == _n);
-        _data = m._data;
+        _data = std::move(m._data);
         return *this;
     }
 
@@ -258,7 +258,7 @@ class matrix {
         assert(j2 <= _n);
         assert(i1 < i2);
         assert(j1 < j2);
-        return matrixview<T>(i2 - i1, j2 - j1, _data, _m, i1 + j1 * _m);
+        return matrixview<T>(i2 - i1, j2 - j1, &_data[i1 + j1 * _m], _m);
     }
 
     /**
@@ -309,7 +309,7 @@ class matrix {
     // Number of columns of the matrix
     const int _n;
     // Pointer to the data
-    std::shared_ptr<T[]> _data;
+    std::unique_ptr<T[]> _data;
 };
 
 /**
@@ -342,12 +342,9 @@ class matrixview {
      *               Leading dimension of the matrix
      *               i.e. the number of elements between
      *               two elements of the same row.
-     *
-     * @param offset integer
-     *               Offset of the matrix
      */
-    matrixview(int m, int n, std::shared_ptr<T[]> data, int ldim, int offset)
-        : _m(m), _n(n), _ldim(ldim), _offset(offset), _data(data)
+    matrixview(int m, int n, T* data, int ldim)
+        : _m(m), _n(n), _ldim(ldim), _data(data)
     {
         assert(_ldim >= _m);
     }
@@ -355,7 +352,7 @@ class matrixview {
     // Destructor
     ~matrixview()
     {
-        // Nothing to do here, the shared pointer will take care of the memory
+        // Nothing to do here, matrixview does not own the data
     }
 
     /**
@@ -369,7 +366,6 @@ class matrixview {
         : _m(m.num_rows()),
           _n(m.num_columns()),
           _ldim(m.ldim()),
-          _offset(m.offset()),
           _data(m._data)
     {}
 
@@ -383,8 +379,7 @@ class matrixview {
         : _m(m.num_rows()),
           _n(m.num_columns()),
           _ldim(m.num_rows()),
-          _offset(0),
-          _data(m._data)
+          _data(m._data.get())
     {}
 
     /**
@@ -398,7 +393,6 @@ class matrixview {
         : _m(m.num_rows()),
           _n(m.num_columns()),
           _ldim(m.ldim()),
-          _offset(m.offset()),
           _data(m._data)
     {}
 
@@ -416,7 +410,6 @@ class matrixview {
         _m = m._m;
         _n = m._n;
         _ldim = m._ldim;
-        _offset = m._offset;
         _data = m._data;
         return *this;
     }
@@ -435,7 +428,6 @@ class matrixview {
         _m = m._m;
         _n = m._n;
         _ldim = m._ldim;
-        _offset = m._offset;
         _data = m._data;
         return *this;
     }
@@ -451,11 +443,6 @@ class matrixview {
 
     // Returns the size of the matrix (i.e. the number of elements m * n)
     inline int size() const { return _n * _m; }
-
-    // Returns the offset of the matrix
-    // (The number of elements in the data before the first element of the
-    // matrix)
-    inline int offset() const { return _offset; }
 
     /**
      * @brief Access the ij-th element of the matrix
@@ -473,7 +460,7 @@ class matrixview {
         assert(i >= 0);
         assert(j < _n);
         assert(j >= 0);
-        return _data[_offset + i + j * _ldim];
+        return _data[i + j * _ldim];
     }
 
     /**
@@ -491,7 +478,7 @@ class matrixview {
         assert(i >= 0);
         assert(j < _n);
         assert(j >= 0);
-        return _data[_offset + i + j * _ldim];
+        return _data[i + j * _ldim];
     }
 
     /**
@@ -518,8 +505,7 @@ class matrixview {
         assert(j2 <= _n);
         assert(i1 < i2);
         assert(j1 < j2);
-        return matrixview(i2 - i1, j2 - j1, _data, _ldim,
-                          _offset + i1 + j1 * _ldim);
+        return matrixview(i2 - i1, j2 - j1, &_data[i1 + j1 * _ldim], _ldim);
     }
 
     /**
@@ -535,7 +521,7 @@ class matrixview {
     {
         assert(i >= 0);
         assert(i < _n);
-        return vectorview<T>(_m, &_data[_offset + i * _ldim], 1);
+        return vectorview<T>(_m, &_data[i * _ldim], 1);
     }
 
     /**
@@ -551,18 +537,18 @@ class matrixview {
     {
         assert(i >= 0);
         assert(i < _m);
-        return vectorview<T>(_n, &_data[_offset + i], _ldim);
+        return vectorview<T>(_n, &_data[i], _ldim);
     }
 
     /**
      * Return a pointer to the data of the matrix.
      */
-    inline T* data() { return _data.get(); }
+    inline T* data() { return _data; }
 
     /**
      * Return a pointer to the data of the matrix.
      */
-    inline const T* data() const { return _data.get(); }
+    inline const T* data() const { return _data; }
 
    private:
     // Number of rows of the matrix
@@ -571,10 +557,8 @@ class matrixview {
     int _n;
     // Leading dimension of the matrix
     int _ldim;
-    // Offset of the matrix
-    int _offset;
     // Pointer to the data
-    std::shared_ptr<T[]> _data;
+    T* _data;
 };
 
 // Code for printing
