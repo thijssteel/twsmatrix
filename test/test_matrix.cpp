@@ -383,8 +383,6 @@ TEMPLATE_TEST_CASE(
     }
 }
 
-
-
 TEMPLATE_TEST_CASE("Matrix utils work", "[matrix]", double, float, int)
 {
     typedef TestType T;
@@ -400,4 +398,57 @@ TEMPLATE_TEST_CASE("Matrix utils work", "[matrix]", double, float, int)
 
     randomize(B);
     print_matrix(B);
+}
+
+TEMPLATE_TEST_CASE("Test some weird behavior with matrix r-values",
+                   "[matrix]",
+                   double,
+                   float,
+                   int)
+{
+    typedef TestType T;
+    int m = 2;
+    int n = 3;
+
+    matrix<T> A(m, n);
+
+    for (int j = 0; j < A.num_columns(); ++j) {
+        for (int i = 0; i < A.num_rows(); ++i) {
+            A(i, j) = 0;
+        }
+    }
+
+    SECTION("Check if view is modified if passed by value")
+    {
+        // This is expected behavior, we pass a view which should always be a
+        // reference even if passed by value.
+        add_one_value(A.submatrix(0, m, 0, n));
+        for (int j = 0; j < A.num_columns(); ++j) {
+            for (int i = 0; i < A.num_rows(); ++i) {
+                REQUIRE(A(i, j) == 1);
+            }
+        }
+    }
+
+    SECTION("Check that matrix is never modified, even for r-value views")
+    {
+        // If we explicitly ask for a vector to be passed by value
+        // it should be copied and not modified.
+        add_one_value<matrix<T>>(A.submatrix(0, m, 0, n));
+        for (int j = 0; j < A.num_columns(); ++j) {
+            for (int i = 0; i < A.num_rows(); ++i) {
+                REQUIRE(A(i, j) == 0);
+            }
+        }
+    }
+
+    SECTION("Check that matrix can be passed to view")
+    {
+        add_one_value<matrixview<T>>(A);
+        for (int j = 0; j < A.num_columns(); ++j) {
+            for (int i = 0; i < A.num_rows(); ++i) {
+                REQUIRE(A(i, j) == 1);
+            }
+        }
+    }
 }

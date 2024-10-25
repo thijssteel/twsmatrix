@@ -15,6 +15,8 @@ and make sure that the compiler knows where to find the header files. We recomme
 - Create a new environment variable called `MATRIXLIBRARY` and set it to the directory where the header files are located. Note, this is not just the directory where you cloned this repository but the `include/` directory within it. To avoid having to recreate this variable every time you open a new terminal, you can add the following line to your `.bashrc` or `.bash_profile` file: `export MATRIXLIBRARY=/path/to/header/files`.
 - When you compile your code, add the following flag to the compiler command:`-I$(MATRIXLIBRARY)`. This tells the compiler to look for header files in the directory specified by the `MATRIXLIBRARY` environment variable.
 
+**Imporant note: the library uses C++20 features so make sure you compile with the `-std=c++20` flag.** 
+
 ## Usage
 
 ### Creating a vector or matrix

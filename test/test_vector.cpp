@@ -306,4 +306,11 @@ TEMPLATE_TEST_CASE(
             REQUIRE(v[i] == 0);
         }
     }
+
+    SECTION("Check that vector can be passed to view"){
+        add_one_value<vectorview<T>>(v);
+        for (int i = 0; i < v.size(); ++i) {
+            REQUIRE(v[i] == 1);
+        }
+    }
 }

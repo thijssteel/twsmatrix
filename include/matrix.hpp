@@ -40,6 +40,8 @@ class matrixview;
  */
 template <Scalar T = double>
 class matrix {
+    friend class matrixview<T>;
+
    public:
     typedef T val_t;
 
@@ -369,6 +371,20 @@ class matrixview {
     {}
 
     /**
+     * @brief Construct a new matrixview object as a view of a matrix
+     *
+     * @param m matrix
+     *          Matrix to view
+     */
+    matrixview(const matrix<T>& m)
+        : _m(m.num_rows()),
+          _n(m.num_columns()),
+          _ldim(m.num_rows()),
+          _offset(0),
+          _data(m._data)
+    {}
+
+    /**
      * @brief Construct a new Matrix object by moving the data of another matrix
      *        This does a shallow copy
      *
@@ -394,10 +410,10 @@ class matrixview {
      */
     matrixview& operator=(const matrixview& m)
     {
-        assert(m.num_rows() == _m);
-        assert(m.num_columns() == _n);
-        assert(m.ldim() == _ldim);
-        assert(m.offset() == _offset);
+        _m = m._m;
+        _n = m._n;
+        _ldim = m._ldim;
+        _offset = m._offset;
         _data = m._data;
         return *this;
     }
@@ -413,10 +429,10 @@ class matrixview {
      */
     matrixview& operator=(matrixview&& m)
     {
-        assert(m.num_rows() == _m);
-        assert(m.num_columns() == _n);
-        assert(m.ldim() == _ldim);
-        assert(m.offset() == _offset);
+        _m = m._m;
+        _n = m._n;
+        _ldim = m._ldim;
+        _offset = m._offset;
         _data = m._data;
         return *this;
     }
@@ -547,13 +563,13 @@ class matrixview {
 
    private:
     // Number of rows of the matrix
-    const int _m;
+    int _m;
     // Number of columns of the matrix
-    const int _n;
+    int _n;
     // Leading dimension of the matrix
-    const int _ldim;
+    int _ldim;
     // Offset of the matrix
-    const int _offset;
+    int _offset;
     // Pointer to the data
     std::shared_ptr<T[]> _data;
 };

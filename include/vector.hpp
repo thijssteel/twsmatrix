@@ -13,7 +13,7 @@ namespace tws {
 
 // This defines a vector as an abstract concept.
 // You can safely ignore this untill you have learned about concepts.
-template<typename T>
+template <typename T>
 concept Scalar = std::is_arithmetic<T>::value;
 
 template <typename V>
@@ -38,6 +38,7 @@ class vectorview;
  */
 template <Scalar T = double>
 class vector {
+    friend class vectorview<T>;
 
    public:
     typedef T val_t;
@@ -281,7 +282,6 @@ class vector {
  */
 template <Scalar T>
 class vectorview {
-
    public:
     typedef T val_t;
 
@@ -304,7 +304,16 @@ class vectorview {
      *          vector to copy
      */
     vectorview(const vectorview& v)
-        : _n(v._n), _stride(v._stride), _offset(v._offset),_data(v._data)
+        : _n(v._n), _stride(v._stride), _offset(v._offset), _data(v._data)
+    {}
+
+    /**
+     * @brief Construct a new vectorview to view the data of a vector
+     *        This does a shallow copy.
+     *
+     */
+    vectorview(const vector<T>& v)
+        : _n(v.size()), _stride(1), _offset(0), _data(v._data)
     {}
 
     /**
@@ -314,7 +323,9 @@ class vectorview {
      * @param v vector
      *          vector to move
      */
-    vectorview(vectorview&& v) : _n(v._n), _stride(v._stride), _offset(v._offset), _data(v._data) {}
+    vectorview(vectorview&& v)
+        : _n(v._n), _stride(v._stride), _offset(v._offset), _data(v._data)
+    {}
 
     /**
      * @brief Assign the data of another vector to this vector
@@ -327,9 +338,9 @@ class vectorview {
      */
     vectorview& operator=(const vectorview& v)
     {
-        assert(v.size() == _n);
-        assert(v.stride() == _stride);
-        assert(v.offset() == _offset);
+        _n = v._n;
+        _stride = v._stride;
+        _offset = v._offset;
         _data = v._data;
         return *this;
     }
@@ -345,9 +356,9 @@ class vectorview {
      */
     vectorview& operator=(vectorview&& v)
     {
-        assert(v.size() == _n);
-        assert(v.stride() == _stride);
-        assert(v.offset() == _offset);
+        _n = v._n;
+        _stride = v._stride;
+        _offset = v._offset;
         _data = v._data;
         return *this;
     }
@@ -414,8 +425,8 @@ class vectorview {
         assert(end <= _n);
         assert(start < end);
         assert(stride > 0);
-        return vectorview((end - start) / stride, _data,
-                          _stride * stride, _offset + start * _stride);
+        return vectorview((end - start) / stride, _data, _stride * stride,
+                          _offset + start * _stride);
     }
 
     /**
@@ -433,9 +444,9 @@ class vectorview {
     inline T* data() { return _data.get(); }
 
    private:
-    const int _n;
-    const int _stride;
-    const int _offset;
+    int _n;
+    int _stride;
+    int _offset;
     std::shared_ptr<T[]> _data;
 };
 
@@ -443,22 +454,23 @@ class vectorview {
 template <Vector V>
 void randomize(V& v)
 {
-    #ifdef NDEBUG
+#ifdef NDEBUG
     std::random_device rd;
     std::mt19937 gen(rd());
-    #else
+#else
     // Note, when debugging, we want to have the same random numbers every time
     std::mt19937 gen(1302);
-    #endif
+#endif
 
     typedef typename V::val_t T;
 
-    if constexpr(std::is_integral<T>::value) {
+    if constexpr (std::is_integral<T>::value) {
         std::uniform_int_distribution<T> d(0, 100);
         for (int i = 0; i < v.size(); ++i) {
             v[i] = d(gen);
         }
-    } else {
+    }
+    else {
         std::normal_distribution<T> d(0, 1);
         for (int i = 0; i < v.size(); ++i) {
             v[i] = d(gen);
