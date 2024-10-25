@@ -15,7 +15,7 @@
 namespace tws {
 
 // This defines a matrix as an abstract concept.
-// You can safely ignore this untill you have learned about concepts.
+// You can safely ignore this until you have learned about concepts.
 template <typename M>
 concept Matrix = requires(M m)
 {
@@ -97,7 +97,7 @@ class matrix {
      * @brief Construct a new Matrix object as a copy of another matrix
      *        This does a deep copy
      *
-     * This is a templated version, you can safely ignore this untill you
+     * This is a templated version, you can safely ignore this until you
      * have learned about expression templates and more advanced C++ features.
      *
      * @param m Matrix
@@ -151,7 +151,7 @@ class matrix {
      * @brief Assign the data of another matrix to this matrix
      *        This does a deep copy
      *
-     * This is a templated version, you can safely ignore this untill you
+     * This is a templated version, you can safely ignore this until you
      * have learned about expression templates and more advanced C++ features.
      *
      * @param m Matrix

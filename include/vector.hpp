@@ -12,7 +12,7 @@
 namespace tws {
 
 // This defines a vector as an abstract concept.
-// You can safely ignore this untill you have learned about concepts.
+// You can safely ignore this until you have learned about concepts.
 template <typename T>
 concept Scalar = std::is_arithmetic<T>::value;
 
@@ -100,7 +100,7 @@ class vector {
      * @brief Construct a new vector as a copy of another vector
      *        This does a deep copy.
      *
-     * This is a templated version, you can safely ignore this untill you
+     * This is a templated version, you can safely ignore this until you
      * have learned about expression templates and more advanced C++ features.
      *
      * @param v vector
