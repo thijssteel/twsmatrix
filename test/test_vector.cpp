@@ -90,12 +90,12 @@ TEMPLATE_TEST_CASE("Vector class works", "[vector]", double, float, int)
 
     SECTION("Test subvector")
     {
-        vectorview<T> v2 = v.subvector(1, n-1);
+        vectorview<T> v2 = v.subvector(1, n - 1);
         for (int i = 0; i < v2.size(); ++i) {
             REQUIRE(v2[i] == i + 1);
         }
         // Modify v2 and make sure v is modified as well
-        for( int i = 0; i < v2.size(); ++i){
+        for (int i = 0; i < v2.size(); ++i) {
             v2[i] += 1;
         }
         for (int i = 1; i < v.size() - 1; ++i) {
@@ -195,12 +195,12 @@ TEMPLATE_TEST_CASE("Vectorview class works", "[vector]", double, float, int)
 
     SECTION("Test subvector")
     {
-        vectorview<T> v2 = v.subvector(1, n-1);
+        vectorview<T> v2 = v.subvector(1, n - 1);
         for (int i = 0; i < v2.size(); ++i) {
             REQUIRE(v2[i] == i + 1);
         }
         // Modify v2 and make sure v is modified as well
-        for( int i = 0; i < v2.size(); ++i){
+        for (int i = 0; i < v2.size(); ++i) {
             v2[i] += 1;
         }
         for (int i = 1; i < v.size() - 1; ++i) {
@@ -227,7 +227,8 @@ TEMPLATE_TEST_CASE("Vectorview class works", "[vector]", double, float, int)
     }
 }
 
-TEMPLATE_TEST_CASE("Vectorview - vector interaction works", "[vector]", double, float, int)
+TEMPLATE_TEST_CASE(
+    "Vectorview - vector interaction works", "[vector]", double, float, int)
 {
     typedef TestType T;
     int n = 5;
@@ -256,7 +257,6 @@ TEMPLATE_TEST_CASE("Vectorview - vector interaction works", "[vector]", double, 
         for (int i = 0; i < v2.size(); ++i) {
             REQUIRE(v2[i] == 10 * i);
         }
-
     }
 }
 
@@ -274,4 +274,36 @@ TEMPLATE_TEST_CASE("Vector utils work", "[vector]", double, float, int)
 
     print_vector(v);
     print_vector(vv);
+}
+
+TEMPLATE_TEST_CASE(
+    "Test some weird behavior with r-values", "[vector]", double, float, int)
+{
+    typedef TestType T;
+    int n = 3;
+
+    vector<T> v(n);
+
+    for (int i = 0; i < v.size(); ++i) {
+        v[i] = 0;
+    }
+
+    SECTION("Check if view is modified if passed by value")
+    {
+        // This is expected behavior, we pass a view which should always be a reference
+        // even if passed by value.
+        add_one_value(v.subvector(0, n));
+        for (int i = 0; i < v.size(); ++i) {
+            REQUIRE(v[i] == 1);
+        }
+    }
+
+    SECTION("Check that vector is never modified, even for r-value views"){
+        // If we explicitly ask for a vector to be passed by value
+        // it should be copied and not modified.
+        add_one_value<vector<T>>(v.subvector(0, n));
+        for (int i = 0; i < v.size(); ++i) {
+            REQUIRE(v[i] == 0);
+        }
+    }
 }
