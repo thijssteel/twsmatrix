@@ -15,6 +15,8 @@ and make sure that the compiler knows where to find the header files. We recomme
 - Create a new environment variable called `MATRIXLIBRARY` and set it to the directory where the header files are located. Note, this is not just the directory where you cloned this repository but the `include/` directory within it. To avoid having to recreate this variable every time you open a new terminal, you can add the following line to your `.bashrc` or `.bash_profile` file: `export MATRIXLIBRARY=/path/to/header/files`.
 - When you compile your code, add the following flag to the compiler command:`-I$(MATRIXLIBRARY)`. This tells the compiler to look for header files in the directory specified by the `MATRIXLIBRARY` environment variable.
 
+**Imporant note: the library uses C++20 features so make sure you compile with the `-std=c++20` flag.** 
+
 ## Usage
 
 ### Creating a vector or matrix
@@ -61,25 +63,45 @@ v[0] = 5; // This will not compile
 
 You can create submatrices and subvectors using the `submatrix` and `subvector` functions. For example, to create a submatrix of the first 3 rows and 4 columns of a matrix `m`, you can use the following code:
 ```cpp
-tws::matrix<> sub = m.submatrix(0, 3, 0, 4);
+tws::matrixview<> sub = m.submatrix(0, 3, 0, 4);
 ```
-The `sub` matrix will be a view into the original matrix `m`, so changing elements in `sub` will also change the corresponding elements in `m`. If you don't want this behavior, you can create a copy of the submatrix:
+The `sub` matrix will be a view into the original matrix `m`, so changing elements in `sub` will also change the corresponding elements in `m`. If you don't want this behavior, you can declare `sub` as a matrix instead of a matrixview:
 ```cpp
-    tws::matrix<> sub(3,4);
-    sub = m.submatrix(0, 3, 0, 4);
+    tws::matrix<> sub = m.submatrix(0, 3, 0, 4);
 ```
 The same applies to subvectors.
 
 You can also select a row or a column of a matrix using the `row` and `colomn` functions. For example, to select the second row of a matrix `m`, you can use the following code:
 ```cpp
-tws::vector<> row = m.row(1);
+tws::vectorview<> row = m.row(1);
 ```
 To select the third column of a matrix `m`, you can use the following code:
 ```cpp
-tws::vector<> column = m.column(2);
+tws::vectorview<> column = m.column(2);
 ```
 Just like a submatrix or subvector, a row or a column is a view into the original matrix, so changing elements in the row or column will also change the corresponding elements in the original matrix.
 
+### Passing matrices and vectors to functions
+
+An important decision when passing anything to a function is whether to pass by value or by reference.
+
+If you pass a `matrix` or a `vector` by value, a copy of the matrix or vector will be made and changes made to the matrix or vector inside the function will not affect the original matrix or vector.
+
+If you pass a `matrix` or a `vector` by reference, no copy will be made and changes made to the matrix or vector inside the function will affect the original matrix or vector. If you don't want the original to be modified, you can pass it as a `const` reference.
+
+The `matrixview` and `vectorview` classes are a bit special. They are always references to some other matrix/vector. Even if you pass them by value, changes made to the view will affect the original matrix/vector.
+
+Finally, you may want to write a function that can accept both a `vector` and a `vectorview`. You can do this by using a template argument. For example, the following function will work with both `vector` and `vectorview`:
+```cpp
+template <Vector V>
+void print_vector(const V& v) {
+    for (int i = 0; i < v.size(); i++) {
+        std::cout << v[i] << " ";
+    }
+    std::cout << std::endl;
+}
+```
+Be careful when using this, as the behavior of `vector` and `vectorview` is subtly different, like when passing it by value so make sure it can handle both cases.
 
 ### Useful operations
 
@@ -91,8 +113,8 @@ You can also multiply two matrices using the `operator*`:
 ```cpp
 tws::matrix<> result = m1 * m2;
 ```
-These functions will automatically check if the dimensions of the matrices are compatible for the operation.\\
-\newline
+These functions will automatically check if the dimensions of the matrices are compatible for the operation.
+
 They will also create a new matrix to store the results. As mentioned before, this can be expensive if you are doing many operations in a loop. To avoid performance issues, you can use the alternative function `multiply`, which multiplies two matrices and stores the result in a pre-allocated matrix:
 ```cpp
 tws::matrix<> result(10, 15);
