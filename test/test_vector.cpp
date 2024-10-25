@@ -126,9 +126,9 @@ TEMPLATE_TEST_CASE("Vectorview class works", "[vector]", double, float, int)
     int n = 5;
     int stride = GENERATE(1, 2);
 
-    std::shared_ptr<T[]> data(new T[n * stride]);
+    std::unique_ptr<T[]> data(new T[n * stride]);
 
-    vectorview<T> v(n, data, stride);
+    vectorview<T> v(n, data.get(), stride);
 
     REQUIRE(v.size() == n);
 
@@ -166,30 +166,28 @@ TEMPLATE_TEST_CASE("Vectorview class works", "[vector]", double, float, int)
 
     SECTION("Test copy assignment")
     {
-        std::shared_ptr<T[]> data_new(new T[n * stride]);
-        vectorview<T> v2(n, data_new, stride);
+        std::unique_ptr<T[]> data_new(new T[n * stride]);
+        vectorview<T> v2(n, data_new.get(), stride);
         T* data1 = v.data();
         v2 = v;
         for (int i = 0; i < v2.size(); ++i) {
             REQUIRE(v2[i] == i);
         }
         // Make sure the pointers has been copied
-        REQUIRE(data_new.use_count() == 1);
         REQUIRE(v2.data() == data1);
         REQUIRE(v.data() == data1);
     }
 
     SECTION("Test move assignment")
     {
-        std::shared_ptr<T[]> data_new(new T[n * stride]);
-        vectorview<T> v2(n, data_new, stride);
+        std::unique_ptr<T[]> data_new(new T[n * stride]);
+        vectorview<T> v2(n, data_new.get(), stride);
         T* data = v.data();
         v2 = std::move(v);
         for (int i = 0; i < v2.size(); ++i) {
             REQUIRE(v2[i] == i);
         }
         // Make sure the pointer has been moved
-        REQUIRE(data_new.use_count() == 1);
         REQUIRE(v2.data() == data);
     }
 
@@ -235,8 +233,8 @@ TEMPLATE_TEST_CASE(
     int stride = GENERATE(1, 2);
 
     vector<T> v(n);
-    std::shared_ptr<T[]> data(new T[n * stride]);
-    vectorview<T> vv(n, data, stride);
+    std::unique_ptr<T[]> data(new T[n * stride]);
+    vectorview<T> vv(n, data.get(), stride);
 
     for (int i = 0; i < v.size(); ++i) {
         v[i] = i;
@@ -266,8 +264,8 @@ TEMPLATE_TEST_CASE("Vector utils work", "[vector]", double, float, int)
     int n = 3;
 
     vector<T> v(n);
-    std::shared_ptr<T[]> data(new T[n]);
-    vectorview<T> vv(n, data, 1);
+    std::unique_ptr<T[]> data(new T[n]);
+    vectorview<T> vv(n, data.get(), 1);
 
     randomize(v);
     randomize(vv);

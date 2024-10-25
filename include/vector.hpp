@@ -79,7 +79,7 @@ class vector {
     // Destructor
     ~vector()
     {
-        // Nothing to do here, the shared pointer will take care of the memory
+        // Nothing to do here, the unique pointer will take care of the memory
     }
 
     /**
@@ -122,7 +122,7 @@ class vector {
      * @param v vector
      *          vector to move
      */
-    vector(vector&& v) : _n(v.size()), _data(v._data) {}
+    vector(vector&& v) : _n(v.size()), _data(std::move(v._data)) {}
 
     /**
      * @brief Assign the data of another vector to this vector.
@@ -174,7 +174,7 @@ class vector {
     vector& operator=(vector&& v)
     {
         assert(v.size() == _n);
-        _data = v._data;
+        _data = std::move(v._data);
         return *this;
     }
 
@@ -234,7 +234,7 @@ class vector {
         assert(end <= _n);
         assert(start < end);
         assert(stride > 0);
-        return vectorview<T>((end - start) / stride, _data, stride, start);
+        return vectorview<T>((end - start) / stride, &_data[start], stride);
     }
 
     /**
@@ -269,7 +269,7 @@ class vector {
 
    private:
     const int _n;
-    std::shared_ptr<T[]> _data;
+    std::unique_ptr<T[]> _data;
 };
 
 /**
@@ -286,8 +286,8 @@ class vectorview {
     typedef T val_t;
 
     // Constructor
-    vectorview(int n, std::shared_ptr<T[]> data, int stride = 1, int offset = 0)
-        : _n(n), _stride(stride), _offset(offset), _data(data)
+    vectorview(int n, T* data, int stride = 1)
+        : _n(n), _stride(stride), _data(data)
     {}
 
     // Destructor
@@ -304,7 +304,7 @@ class vectorview {
      *          vector to copy
      */
     vectorview(const vectorview& v)
-        : _n(v._n), _stride(v._stride), _offset(v._offset), _data(v._data)
+        : _n(v._n), _stride(v._stride), _data(v._data)
     {}
 
     /**
@@ -313,7 +313,7 @@ class vectorview {
      *
      */
     vectorview(const vector<T>& v)
-        : _n(v.size()), _stride(1), _offset(0), _data(v._data)
+        : _n(v.size()), _stride(1), _data(v._data.get())
     {}
 
     /**
@@ -324,7 +324,7 @@ class vectorview {
      *          vector to move
      */
     vectorview(vectorview&& v)
-        : _n(v._n), _stride(v._stride), _offset(v._offset), _data(v._data)
+        : _n(v._n), _stride(v._stride), _data(v._data)
     {}
 
     /**
@@ -340,7 +340,6 @@ class vectorview {
     {
         _n = v._n;
         _stride = v._stride;
-        _offset = v._offset;
         _data = v._data;
         return *this;
     }
@@ -358,7 +357,6 @@ class vectorview {
     {
         _n = v._n;
         _stride = v._stride;
-        _offset = v._offset;
         _data = v._data;
         return *this;
     }
@@ -368,9 +366,6 @@ class vectorview {
 
     // Returns the stride of the vector
     inline int stride() const { return _stride; }
-
-    // Returns the offset of the vector
-    inline int offset() const { return _offset; }
 
     /**
      * @brief Access the i-th element of the vector
@@ -384,7 +379,7 @@ class vectorview {
     {
         assert(i < _n);
         assert(i >= 0);
-        return _data[_offset + i * _stride];
+        return _data[i * _stride];
     }
 
     /**
@@ -398,7 +393,7 @@ class vectorview {
     {
         assert(i < _n);
         assert(i >= 0);
-        return _data[_offset + i * _stride];
+        return _data[i * _stride];
     }
 
     /**
@@ -425,29 +420,23 @@ class vectorview {
         assert(end <= _n);
         assert(start < end);
         assert(stride > 0);
-        return vectorview((end - start) / stride, _data, _stride * stride,
-                          _offset + start * _stride);
+        return vectorview((end - start) / stride, &_data[start * _stride], _stride * stride);
     }
 
     /**
      * Return a pointer to the data of the vector.
-     *
-     * Warning, use with caution, this is not a shared pointer.
      */
-    inline const T* data() const { return _data.get(); }
+    inline const T* data() const { return _data; }
 
     /**
      * Return a pointer to the data of the vector.
-     *
-     * Warning, use with caution, this is not a shared pointer.
      */
-    inline T* data() { return _data.get(); }
+    inline T* data() { return _data; }
 
    private:
     int _n;
     int _stride;
-    int _offset;
-    std::shared_ptr<T[]> _data;
+    T* _data;
 };
 
 // Initialize a vector with random values

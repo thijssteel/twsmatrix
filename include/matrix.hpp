@@ -274,7 +274,7 @@ class matrix {
     {
         assert(i >= 0);
         assert(i < _n);
-        return vectorview<T>(_m, _data, 1, i * _m);
+        return vectorview<T>(_m, &_data[i * _m], 1);
     }
 
     /**
@@ -290,7 +290,7 @@ class matrix {
     {
         assert(i >= 0);
         assert(i < _m);
-        return vectorview<T>(_n, _data, _m, i);
+        return vectorview<T>(_n, &_data[i], _m);
     }
 
     /**
@@ -535,7 +535,7 @@ class matrixview {
     {
         assert(i >= 0);
         assert(i < _n);
-        return vectorview<T>(_m, _data, 1, _offset + i * _ldim);
+        return vectorview<T>(_m, &_data[_offset + i * _ldim], 1);
     }
 
     /**
@@ -551,7 +551,7 @@ class matrixview {
     {
         assert(i >= 0);
         assert(i < _m);
-        return vectorview<T>(_n, _data, _ldim, _offset + i);
+        return vectorview<T>(_n, &_data[_offset + i], _ldim);
     }
 
     /**
