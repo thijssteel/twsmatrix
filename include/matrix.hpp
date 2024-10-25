@@ -198,6 +198,9 @@ class matrix {
     // Returns the size of the matrix (i.e. the number of elements m * n)
     inline int size() const { return _n * _m; }
 
+    // Returns the leading dimension of the matrix
+    inline int ldim() const { return _m; }
+
     /**
      * @brief Access the ij-th element of the matrix
      *
