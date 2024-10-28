@@ -29,10 +29,11 @@
     <Expand>
         <Item Name="m">_m</Item>
         <Item Name="n">_n</Item>
-        <IndexListItems>
-            <Size>_n * _m</Size>
-            <ValueNode>_data.get()[ $i/_m*_m + $i%_m ]</ValueNode>
-        </IndexListItems>
+        <ArrayItems>
+          <Rank>2</Rank>
+          <Size>$i==0 ? _m : _n</Size>
+          <ValuePointer>_data.get()</ValuePointer>
+        </ArrayItems>
     </Expand>
 </Type>
 
@@ -43,8 +44,8 @@
         <Item Name="n">_n</Item>
         <Item Name="ldim">_ldim</Item>
         <IndexListItems>
-            <Size>_n * _m</Size>
-            <ValueNode>_data[ $i/_m*_ldim + $i%_m ]</ValueNode>
+            <Size>_n</Size>
+            <ValueNode>this.column($i)</ValueNode>
         </IndexListItems>
     </Expand>
 </Type>
