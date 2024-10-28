@@ -121,3 +121,11 @@ tws::matrix<> result(10, 15);
 multiply(m1, m2, result);
 ```
 Check the `matrix_operations.hpp` and `vector_operations.hpp` files for more operations that you can perform on matrices and vectors.
+
+### Using the debugger
+
+You might notice that when you try to inspect a `std::vector` in the debugger it likely shows you all the elements of the vector. This is not a feature of `std::vector`, but rather a feature of your editor. To get the same behavior for our `tws::vector` and `tws::matrix`, you can add the `twsmatrix.natvis` file to your config. Add the following line to your `launch.json` file:
+```json
+"visualizerFile": "${matrixlibrary}/twsmatrix.natvis",
+```
+Note: this will override the normal behavior for `std` containers. We don't know how to make it work for both `std` and `tws` containers at the same time, if you do, please let us know.

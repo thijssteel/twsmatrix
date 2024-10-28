@@ -3,24 +3,48 @@
 <AutoVisualizer xmlns="http://schemas.microsoft.com/vstudio/debugger/natvis/2010">
 
 <Type Name="tws::vector&lt;*&gt;">      
-    <DisplayString>vector ({n_})</DisplayString>
+    <DisplayString>vector ({_n})</DisplayString>
     <Expand>
     <ArrayItems>
-        <Size>n_</Size>
-        <ValuePointer>data_</ValuePointer>
+        <Size>_n</Size>
+        <ValuePointer>_data.get()</ValuePointer>
     </ArrayItems>
     </Expand>
 </Type>
 
-<Type Name="tws::matrix&lt;*&gt;">      
-    <DisplayString>matrix ({m_} x {n_})</DisplayString>
+<Type Name="tws::vectorview&lt;*&gt;">      
+    <DisplayString>vectorview ({_n})</DisplayString>
     <Expand>
-        <Item Name="m">m_</Item>
-        <Item Name="n">n_</Item>
-        <Item Name="ldim">ldim_</Item>
+        <Item Name="n">_n</Item>
+        <Item Name="stride">_stride</Item>
+        <ArrayItems>
+            <Size>_n</Size>
+            <ValuePointer>_data</ValuePointer>
+        </ArrayItems>
+    </Expand>
+</Type>
+
+<Type Name="tws::matrix&lt;*&gt;">      
+    <DisplayString>matrix ({_m} x {_n})</DisplayString>
+    <Expand>
+        <Item Name="m">_m</Item>
+        <Item Name="n">_n</Item>
         <IndexListItems>
-            <Size>n_ * m_</Size>
-            <ValueNode>data_[ $i/m_*ldim_ + $i%m_ ]</ValueNode>
+            <Size>_n * _m</Size>
+            <ValueNode>_data.get()[ $i/_m*_m + $i%_m ]</ValueNode>
+        </IndexListItems>
+    </Expand>
+</Type>
+
+<Type Name="tws::matrixview&lt;*&gt;">      
+    <DisplayString>matrixview ({_m} x {_n})</DisplayString>
+    <Expand>
+        <Item Name="m">_m</Item>
+        <Item Name="n">_n</Item>
+        <Item Name="ldim">_ldim</Item>
+        <IndexListItems>
+            <Size>_n * _m</Size>
+            <ValueNode>_data[ $i/_m*_ldim + $i%_m ]</ValueNode>
         </IndexListItems>
     </Expand>
 </Type>
