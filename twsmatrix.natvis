@@ -17,10 +17,10 @@
     <Expand>
         <Item Name="n">_n</Item>
         <Item Name="stride">_stride</Item>
-        <ArrayItems>
+        <IndexListItems>
             <Size>_n</Size>
-            <ValuePointer>_data</ValuePointer>
-        </ArrayItems>
+            <ValueNode>_data[ $i*_stride ]</ValueNode>
+        </IndexListItems>
     </Expand>
 </Type>
 
@@ -31,6 +31,7 @@
         <Item Name="n">_n</Item>
         <ArrayItems>
           <Rank>2</Rank>
+          <Direction>Backward</Direction>
           <Size>$i==0 ? _m : _n</Size>
           <ValuePointer>_data.get()</ValuePointer>
         </ArrayItems>
@@ -44,8 +45,8 @@
         <Item Name="n">_n</Item>
         <Item Name="ldim">_ldim</Item>
         <IndexListItems>
-            <Size>_n</Size>
-            <ValueNode>this.column($i)</ValueNode>
+            <Size>_n * _m</Size>
+            <ValueNode>_data[ $i/_m*_ldim + $i%_m ]</ValueNode>
         </IndexListItems>
     </Expand>
 </Type>
