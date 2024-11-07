@@ -55,7 +55,7 @@ m(1, 2) = 5;
 
 If a matrix or vector is declared as `const`, you can only read elements, not write to them. For example, the following code will not compile:
 ```cpp
-const tws::Vector<> v(10);
+const tws::vector<> v(10);
 v[0] = 5; // This will not compile
 ```
 

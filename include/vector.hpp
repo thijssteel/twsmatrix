@@ -443,13 +443,8 @@ class vectorview {
 template <Vector V>
 void randomize(V& v)
 {
-#ifdef NDEBUG
     std::random_device rd;
     std::mt19937 gen(rd());
-#else
-    // Note, when debugging, we want to have the same random numbers every time
-    std::mt19937 gen(1302);
-#endif
 
     typedef typename V::val_t T;
 
