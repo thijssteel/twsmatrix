@@ -103,6 +103,16 @@ TEMPLATE_TEST_CASE("Vector class works", "[vector]", double, float, int)
         }
     }
 
+    SECTION("Test subvector with stride")
+    {
+        int stride = 2;
+        vectorview<T> v2 = v.subvector(0, n, stride);
+        REQUIRE(v2.size() == static_cast<int>(std::ceil(static_cast<float>(n)/stride)));
+        for (int i = 0; i < v2.size(); ++i) {
+            REQUIRE(v2[i] == i*stride);
+        }
+    }
+
     SECTION("Test add_one_ref")
     {
         add_one_ref(v);

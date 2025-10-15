@@ -234,7 +234,7 @@ class vector {
         assert(end <= _n);
         assert(start < end);
         assert(stride > 0);
-        return vectorview<T>((end - start) / stride, &_data[start], stride);
+        return vectorview<T>((end - start + stride - 1) / stride, &_data[start], stride);
     }
 
     /**
