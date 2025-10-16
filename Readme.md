@@ -5,6 +5,8 @@ This is a small library that defines a matrix and a vector class for use in the 
 The implementation itself is not very general, robust or efficient and is mostly intented for educational purposes. Please use a better implementation for real work.
 
 ## Installation
+_These instructions are for Linux and Mac systems. For Windows systems, the general flow remains the same, but some changes need to be made._
+
 
 The matrix library is a header-only library, so it doesn't need a separate compilation/installation step. Simply include the main header file in your code:
 ```cpp
@@ -12,8 +14,8 @@ The matrix library is a header-only library, so it doesn't need a separate compi
 ```
 and make sure that the compiler knows where to find the header files. We recommend the following workflow:
 - Clone this repository to your local machine.
-- Create a new environment variable called `MATRIXLIBRARY` and set it to the directory where the header files are located. Note, this is not just the directory where you cloned this repository but the `include/` directory within it. To avoid having to recreate this variable every time you open a new terminal, you can add the following line to your `.bashrc` or `.bash_profile` file: `export MATRIXLIBRARY=/path/to/header/files`.
-- When you compile your code, add the following flag to the compiler command:`-I$(MATRIXLIBRARY)`. This tells the compiler to look for header files in the directory specified by the `MATRIXLIBRARY` environment variable.
+- Create a new environment variable called `MATRIXLIBRARY` and set it to the directory where the header files are located. Note, this is not just the directory where you cloned this repository but the `include/` directory within it. To avoid having to recreate this variable every time you open a new terminal, you can add the following line to your `.bashrc` or `.bash_profile` file: `export MATRIXLIBRARY=/path/to/header/files`. These files are located in your home directory `/home/username/`, with `username` your username on the system you are using. They get 'exectued' every time you open a new terminal, so putting this line here makes sure the `MATRIXLIBRARY` environment variable is set for every terminal. After making these changes you should restart your terminal.
+- When you compile your code in the terminal, add the following flag to the compiler command:`-I $MATRIXLIBRARY`. This tells the compiler to look for header files in the directory specified by the `MATRIXLIBRARY` environment variable. If you are compiling using a `Makefile` you should add the flag `-I$(MATRIXLIBRARY)`.
 
 **Imporant note: the library uses C++20 features so make sure you compile with the `-std=c++20` flag.** 
 
